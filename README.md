@@ -1,4 +1,4 @@
-# Stock0lyzer
+# Stock0lyzer2
 
 A command-line tool for quick stock analysis and financial news updates.
 

@@ -194,6 +194,48 @@ def show_chart_analysis(stock_ticker, info):
             print_success("Price is currently priced ABOVE 50-day MA (Potential bullish signal).")
         else:
             print_warning("Price is currently priced BELOW 50-day MA (Potential bearish signal).")
+            
+        # ----------------------------------------------------------------------------------
+        # ---> Naked Short Underwrite Detector / Volatility Index Heuristic (VIH) <---
+        # ----------------------------------------------------------------------------------
+        
+        # Check for extreme conditions (Volatility Index Heuristic - VIH)
+        short_ratio = info.get('shortRatio')
+        
+        # 1. High Volume Check (e.g., last 5 days average is 3x the 60-day average)
+        recent_volume = data['Volume'].iloc[-5:].mean() if len(data) >= 5 else 0
+        long_term_volume = data['Volume'].iloc[-60:-5].mean() if len(data) >= 60 else 0
+        volume_spike_factor = recent_volume / long_term_volume if long_term_volume > 0 else 0
+
+        # 2. Check for the heuristic trigger
+        # CRITERIA: Short Ratio > 5.0 AND Volume Spike Factor > 3.0 (Simulated Volatility Thresholds)
+        
+        is_high_short_interest = short_ratio is not None and short_ratio > 5.0
+        is_extreme_volume = volume_spike_factor > 3.0
+
+        print(f"\n{Fore.YELLOW}--- Volatility Index Heuristic (VIH) ---")
+        
+        # Print supporting metrics
+        print(f"Short Ratio (Days to Cover): {short_ratio if short_ratio is not None else 'N/A'}")
+        print(f"Volume Spike Factor (Recent/Avg): {volume_spike_factor:.2f}")
+
+        if is_high_short_interest and is_extreme_volume:
+            print(f"{Fore.RED}[!]{Style.RESET_ALL}{Fore.YELLOW} Script detects a volatility chain: {Fore.RED}Potential Naked Underwrite Heuristic Triggered!{Style.RESET_ALL}{Fore.YELLOW} Suggesting Extreme Volatility.")
+        else:
+            print(f"{Fore.GREEN}No extreme volatility heuristic triggered.")
+            
+        # ----------------------------------------------------------------------------------
+        # ---> Financial Health Indicator (Operating Revenue/Cash Flow) <---
+        # ----------------------------------------------------------------------------------
+        
+        # Basic Financial Health Check (Operating Cash Flow)
+        operating_revenue = info.get('operatingCashflow')
+        if operating_revenue is not None and operating_revenue > 0:
+            print_success(f"\nPositive Operating Cash Flow: ${operating_revenue:,} (Signal of financial health).")
+        elif operating_revenue is not None:
+             print_warning(f"\nNegative Operating Cash Flow: ${operating_revenue:,} (Potential financial concern).")
+        else:
+            print_warning("\nOperating Cash Flow data N/A.")
 
     except Exception as e:
         print_error(f"An error occurred during chart analysis: {e}")
@@ -265,7 +307,7 @@ def handle_boot():
 def boot_sequence():
     """Displays a simulated boot sequence."""
     os.system('cls' if os.name == 'nt' else 'clear')
-    print(Fore.GREEN + "Booting Stock0lyzer v1.0.5...")
+    print(Fore.GREEN + "Booting Stock0lyzer v2.0.0...")
     time.sleep(0.5)
     print("Initializing data streams...")
     time.sleep(0.3)
@@ -343,7 +385,7 @@ def run_setup():
     """Setup function for packaging."""
     setup(
         name='Stock0lyzer-CLI',
-        version='1.0.5',
+        version='2.0.0',
         packages=find_packages(),
         # Added 'faker' to dependencies
         install_requires=['pandas', 'yfinance', 'requests', 'beautifulsoup4', 'colorama', 'setuptools', 'faker'],
